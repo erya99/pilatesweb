@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Admin Giriş · Pilates Studio{% endblock %}
+
+{% block content %}
+<section class="min-h-[calc(100vh-120px)] flex items-center justify-center">
+  <div class="w-full max-w-md px-4">
+    <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-2xl shadow-[0_30px_120px_-40px_rgba(0,0,0,.35)] p-6 md:p-8">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-rose-300 to-violet-300 shadow-inner"></div>
+        <div>
+          <h1 class="text-xl font-semibold">Yönetim Paneli</h1>
+          <p class="text-stone-600 text-sm">Hoca girişi ile seansları yönetin</p>
+        </div>
+      </div>
+
+      <form method="post" class="mt-6 space-y-4">
+        <label class="block">
+          <span class="mb-2 block text-sm">Şifre</span>
+          <div class="flex items-center gap-2 rounded-2xl bg-white/90 ring-1 ring-white/70 shadow-inner px-4 py-3 focus-within:ring-rose-300">
+            <span>🔒</span>
+            <input id="admin-pass" name="password" type="password" required
+                   placeholder="Yönetim şifrenizi giriniz"
+                   class="w-full bg-transparent outline-none placeholder-stone-400">
+            <button type="button" id="toggle-pass" class="opacity-60 text-sm">👁️</button>
+          </div>
+        </label>
+
+        <button class="w-full rounded-2xl bg-gradient-to-r from-rose-300 to-violet-300 py-3 font-medium text-stone-900 shadow-lg hover:shadow-xl transition">
+          Giriş Yap
+        </button>
+
+        <div class="flex items-center gap-2 pt-2 text-sm">
+          <a href="{{ url_for('login') }}" class="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-white/70 hover:bg-white transition shadow">
+            👩‍🎓 Öğrenci Girişi
+          </a>
+          <span class="ml-auto text-stone-500 text-xs">Bu alan yalnızca yetkililer içindir.</span>
+        </div>
+      </form>
+
+      <div class="mt-6 rounded-2xl border border-white/50 bg-white/45 backdrop-blur p-3 text-xs text-stone-600">
+        Yetkisiz erişim tespit edilirse işlemler kayıt altına alınır.
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // şifre göster/gizle
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('admin-pass');
+    const btn   = document.getElementById('toggle-pass');
+    if (input && btn) {
+      btn.addEventListener('click', () => {
+        input.type = input.type === 'password' ? 'text' : 'password';
+      });
+    }
+  });
+</script>
+{% endblock %}

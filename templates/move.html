@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Saat Değiştir · Pilates Studio{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+  <h2 class="font-semibold mb-4 text-lg">Saat Değiştir</h2>
+
+  <p class="text-sm text-stone-600 mb-4">
+    Mevcut:
+    <span class="font-medium">
+      {{ reservation.session.date.strftime('%d.%m.%Y') }} · {{ reservation.session.time.strftime('%H:%M') }}
+    </span>
+  </p>
+
+  <form method="post" class="space-y-4">
+    <label class="block">
+      <span class="mb-1 block text-sm text-stone-600">Yeni Saat Seç</span>
+      <select name="target_id"
+              class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300"
+              required>
+        {% for s in candidates %}
+          <option value="{{ s.id }}">
+            {{ s.date.strftime('%d.%m.%Y') }} · {{ s.time.strftime('%H:%M') }} (Kalan: {{ s.spots_left }})
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <button class="w-full rounded-2xl bg-gradient-to-r from-rose-300 to-violet-300 px-4 py-3 shadow-lg hover:shadow-xl transition">
+      ✅ Onayla
+    </button>
+  </form>
+</div>
+{% endblock %}

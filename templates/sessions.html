@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Seanslar · Pilates Studio{% endblock %}
+
+{% block content %}
+<div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+  <h2 class="font-semibold mb-4 text-lg">Tüm Yaklaşan Seanslar</h2>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    {% for s in sessions %}
+    <div class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner p-4 flex flex-col justify-between">
+      <div>
+        <div class="font-medium mb-1">{{ s.date.strftime('%d.%m.%Y') }} · {{ s.time.strftime('%H:%M') }}</div>
+        <div class="text-xs text-stone-500 mb-3">
+          Kapasite: {{ s.capacity }} · Kalan: {{ s.spots_left }}
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('reserve', session_id=s.id) }}">
+        <button
+          class="w-full rounded-2xl px-4 py-2 shadow-lg transition
+                 {% if s.spots_left == 0 %}
+                   bg-gray-300 text-gray-500 cursor-not-allowed opacity-70
+                 {% else %}
+                   bg-gradient-to-r from-rose-300 to-violet-300 hover:shadow-xl
+                 {% endif %}"
+          {% if s.spots_left == 0 %}disabled{% endif %}>
+          {% if s.spots_left == 0 %}Dolu{% else %}Katıl{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

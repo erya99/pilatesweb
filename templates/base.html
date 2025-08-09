@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Pilates Studio{% endblock %}</title>
+
+  <!-- Font + Tailwind -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{
+      /* Arka plan resmi: /static/bg.jpg koyarsan o kullanılır */
+      --bg-url: url("{{ url_for('static', filename='bg.jpg') if false else 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=2000&auto=format&fit=crop' }}");
+    }
+    html,body{height:100%}
+    body{
+      font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      /* Arka plan foto + pastel degrade */
+      background:
+        radial-gradient(1200px 600px at 80% 20%, rgba(244,114,182,.20), transparent 60%),
+        radial-gradient(900px 500px at 10% 70%, rgba(139,92,246,.18), transparent 60%),
+        linear-gradient(to bottom right, #ffe4ea 0%, #fff6e6 40%, #f3e8ff 100%);
+      position:relative;
+      overflow-x:hidden;
+    }
+    /* Arkaya büyük full foto + blur cam görünüm */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background-image: var(--bg-url);
+      background-size:cover; background-position:center;
+      opacity:.28;           /* foto çok bastırmasın */
+      filter:brightness(1) saturate(1.05);
+      z-index:-2;
+    }
+    /* Üstüne hafif noise/gölge */
+    body::after{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(800px 500px at 20% 0%, rgba(255,255,255,.4), transparent 60%);
+      z-index:-1;
+      pointer-events:none;
+    }
+    /* Cam kart yardımcı class */
+    .glass{
+      background: rgba(255,255,255,.55);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,.5);
+      box-shadow:
+        0 25px 80px -30px rgba(0,0,0,.25),
+        inset 0 1px 0 rgba(255,255,255,.6);
+    }
+  </style>
+</head>
+<body class="text-stone-800">
+
+  <!-- NAVBAR: cam bar -->
+  <header class="sticky top-0 z-20">
+    <div class="mx-auto max-w-6xl px-4 pt-4">
+      <nav class="glass rounded-2xl px-4 py-3 flex items-center justify-between">
+        <a href="{{ url_for('home') }}" class="flex items-center gap-2 pl-1">
+          <span class="inline-block h-8 w-8 rounded-2xl bg-gradient-to-br from-rose-300 to-violet-300 shadow-inner"></span>
+          <span class="font-semibold tracking-wide">Pilates Studio</span>
+        </a>
+
+        <ul class="hidden md:flex items-center gap-1 text-sm">
+          {% if session.get('is_admin') %}
+            <li><a href="{{ url_for('admin_dashboard') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Yönetim Paneli</a></li>
+            <li><a href="{{ url_for('admin_sessions') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Seanslar</a></li>
+            <li><a href="{{ url_for('admin_members') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Üyeler</a></li>
+            <li><a href="{{ url_for('logout') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Çıkış</a></li>
+          {% elif session.get('user_name') %}
+            <li><span class="px-4 py-2 rounded-xl bg-white/60">{{ session.get('user_name') }}</span></li>
+            <li><a href="{{ url_for('user_dashboard') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Seanslarım</a></li>
+            <li><a href="{{ url_for('list_sessions') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Tüm Seanslar</a></li>
+            <li><a href="{{ url_for('logout') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Çıkış</a></li>
+          {% else %}
+            <li><a href="{{ url_for('login') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Giriş</a></li>
+            <li><a href="{{ url_for('admin_login') }}" class="px-4 py-2 rounded-xl hover:bg-white/60 transition">Yönetim Paneli</a></li>
+          {% endif %}
+        </ul>
+
+        <!-- mobile kısayol -->
+        <div class="md:hidden">
+          {% if session.get('is_admin') %}
+            <a href="{{ url_for('admin_dashboard') }}" class="px-3 py-2 rounded-xl bg-white/70">Panel</a>
+          {% elif session.get('user_name') %}
+            <a href="{{ url_for('user_dashboard') }}" class="px-3 py-2 rounded-xl bg-white/70">Seanslarım</a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="px-3 py-2 rounded-xl bg-white/70">Giriş</a>
+          {% endif %}
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- FLASH: cam küçük kartlar -->
+<div id="flash-message" class="fixed top-4 inset-x-0 z-50 flex justify-center">
+  <div class="w-full max-w-2xl px-4 space-y-3">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      {% for cat, msg in msgs %}
+        {% set color = 'rose' %}
+        {% if cat in ['success','ok'] %}{% set color='emerald' %}
+        {% elif cat in ['info'] %}{% set color='sky' %}
+        {% elif cat in ['warning'] %}{% set color='amber' %}
+        {% elif cat in ['error','danger'] %}{% set color='rose' %}{% endif %}
+        <div class="pointer-events-auto rounded-2xl bg-white shadow-2xl ring-1 ring-stone-200 overflow-hidden">
+          <div class="flex">
+            <div class="w-1.5 bg-{{ color }}-500"></div>
+            <div class="p-4 text-sm text-stone-800">
+              {{ msg }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </div>
+</div>
+
+<script>
+  // 3 saniye sonra mesajı yavaşça kaybolacak şekilde gizle
+  setTimeout(function() {
+    const msg = document.getElementById("flash-message");
+    if (msg) {
+      msg.style.transition = "opacity 0.5s ease";
+      msg.style.opacity = "0";
+      setTimeout(() => msg.remove(), 500); // animasyon bitince DOM’dan sil
+    }
+  }, 3000);
+</script>
+
+  <!-- CONTENT WRAPPER -->
+<!-- base.html içinde, MAIN bölümünü şu hale getir -->
+<main class="mx-auto max-w-6xl px-4 py-8">
+  {% block shell %}
+    <div class="rounded-[28px] glass p-6 md:p-8">
+      {% block content %}{% endblock %}
+    </div>
+  {% endblock %}
+</main>
+
+
+  <!-- FOOTER -->
+  <footer class="mx-auto max-w-6xl px-4 pb-8 text-xs text-stone-600">
+    © Pilates Studio
+  </footer>
+
+</body>
+</html>

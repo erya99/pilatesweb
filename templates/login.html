@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Giriş · Pilates Studio{% endblock %}
+
+{% block content %}
+<style>
+  /* base'in içerik kabını bu sayfada şeffaflaştırıyoruz */
+  .glass{ background: transparent !important; border-color: transparent !important;
+          box-shadow: none !important; backdrop-filter: none !important; }
+</style>
+
+<section class="min-h-[calc(100vh-120px)] flex items-center justify-center">
+  <div class="w-full max-w-6xl px-4">
+    <!-- Üst: 2 büyük kart -->
+    <div class="grid lg:grid-cols-2 gap-8">
+
+      <!-- SOL: Öğrenci girişi (ŞİFRE YOK) -->
+      <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-2xl shadow-[0_30px_120px_-40px_rgba(0,0,0,.35)] p-6 md:p-8">
+        <div class="flex items-start justify-between">
+          <div class="text-sm text-stone-500">Pilates.studio_</div>
+          <a href="{{ url_for('admin_login') }}" class="text-sm text-stone-600 hover:underline">Kaydol / Yönetim</a>
+        </div>
+
+        <h1 class="mt-3 text-3xl font-semibold">Hoş Geldin</h1>
+        <p class="mt-1 text-stone-600">Seanslarına ve paketlerine erişmek için giriş yap.</p>
+
+        <form method="post" class="mt-6 space-y-4">
+          <label class="block">
+            <span class="mb-2 block text-sm">ad‑soyadın</span>
+            <div class="flex items-center gap-2 rounded-2xl bg-white/90 ring-1 ring-white/70 shadow-inner px-4 py-3 focus-within:ring-rose-300">
+              <span>👤</span>
+              <input name="user_name" required placeholder="Örn. Zeynep Kaya"
+                     class="w-full bg-transparent outline-none placeholder-stone-400">
+            </div>
+          </label>
+
+          <button class="w-full rounded-2xl bg-gradient-to-r from-rose-400 via-fuchsia-300 to-violet-300 py-3 font-medium text-stone-900 shadow-lg hover:shadow-xl transition">
+            Seanslarıma Git
+          </button>
+
+          <div class="flex items-center justify-between text-xs text-stone-500 pt-1">
+            <span>Giriş yalnızca kayıtlı üyeler içindir.</span>
+            <a href="{{ url_for('admin_login') }}" class="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-white/70 hover:bg-white transition shadow">
+              🧑‍🏫 Yönetim Girişi
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- SAĞ: Sade kart (Ağustos/2025 ve aura kaldırıldı, metinler ortalandı) -->
+      <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-2xl shadow-[0_30px_120px_-40px_rgba(0,0,0,.30)] p-0 overflow-hidden">
+
+        <!-- İsteğe bağlı hafif arka plan (mesh / foto). İstemiyorsan bu bloğu silebilirsin. -->
+        <div class="h-28 bg-cover bg-center opacity-80
+                    bg-[url('https://images.unsplash.com/photo-1618005198919-5f5d6f21b3df?q=80&w=1600&auto=format&fit=crop')]">
+        </div>
+
+        <!-- Başlık alanı -->
+        <div class="px-6 md:px-8 py-6 grid grid-cols-2 gap-4 bg-white/50">
+          <!-- Sol: stüdyo info -->
+          <div>
+            <div class="text-xs text-stone-500">Stüdyo</div>
+            <div class="text-lg font-semibold">Pilates Studio</div>
+            <div class="text-sm text-stone-600">İzmir • Türkiye</div>
+          </div>
+
+          <!-- Sağ: wellness metinleri + Keşfet -->
+          <div class="text-right">
+            <div class="text-sm font-medium">Wellness &amp; Balance</div>
+            <div class="text-[12px] text-stone-500">Mind • Body • Soul</div>
+            <a href="{{ url_for('list_sessions') }}"
+               class="inline-block mt-2 rounded-full px-4 py-1.5 text-sm bg-gradient-to-r from-rose-300 to-violet-300 shadow hover:brightness-105">
+              Keşfet
+            </a>
+          </div>
+        </div>
+
+        <!-- Alt bilgi satırları -->
+        <div class="grid grid-cols-2 gap-0 text-sm px-6 md:px-8 py-5">
+          <div class="text-stone-700">
+            <div class="text-xs text-stone-500">Bugün</div>
+            <div>Aktif seans: —</div>
+            <div>Mutlu öğrenci: —</div>
+            <a class="mt-1 inline-block text-[12px] text-rose-500 underline">Reformer &amp; Mat</a>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-stone-500">Pilates.studio</div>
+            <div>İzmir • Türkiye</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alt: 2 küçük kart -->
+    <div class="grid lg:grid-cols-2 gap-8 mt-8">
+      <div class="rounded-[16px] border border-white/55 bg-white/55 backdrop-blur-xl p-5 shadow">
+        <div class="text-sm font-medium">“Physical fitness is the first requisite of happiness.”</div>
+        <div class="text-xs text-stone-500 mt-1">— Joseph Pilates</div>
+      </div>
+
+      <div class="rounded-[16px] border border-white/55 bg-white/55 backdrop-blur-xl p-5 shadow flex items-center gap-3">
+        <img src="https://images.unsplash.com/photo-1544006659-f0b21884ce1d?q=80&w=200&auto=format&fit=crop"
+             class="h-10 w-10 rounded-full object-cover" alt="coach">
+        <div>
+          <div class="text-sm font-medium">Ayşe Hoca</div>
+          <div class="text-xs text-stone-500">“Her hareket, bilinçli bir nefes alışverişi ile güçlenir. Bugün kendine vakit ayır.”</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

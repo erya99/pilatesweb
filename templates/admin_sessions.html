@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Seans Yönetimi · Pilates Studio{% endblock %}
+
+{% block content %}
+<div class="grid md:grid-cols-2 gap-6">
+
+  <!-- Yeni Seans Ekle -->
+  <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <h2 class="font-semibold mb-4 text-lg">Yeni Seans Ekle</h2>
+    <form method="post" class="grid gap-3">
+      <label class="block">
+        <span class="mb-1 block text-sm text-stone-600">Tarih</span>
+        <input type="date" name="date"
+               class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300"
+               required>
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm text-stone-600">Saat</span>
+        <input type="time" name="time"
+               class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300"
+               required>
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm text-stone-600">Kapasite</span>
+        <input type="number" name="capacity" min="1" placeholder="Kapasite"
+               class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300"
+               required>
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm text-stone-600">Notlar (opsiyonel)</span>
+        <input type="text" name="notes" placeholder="Örn. Reformer / Mat / Düzey"
+               class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300">
+      </label>
+
+      <button class="mt-2 rounded-2xl bg-gradient-to-r from-rose-300 to-violet-300 px-4 py-3 shadow-lg hover:shadow-xl transition">
+        ➕ Ekle
+      </button>
+    </form>
+  </div>
+
+  <!-- Mevcut Seanslar -->
+  <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-lg">Mevcut Seanslar</h2>
+      <span class="text-xs text-stone-500">Toplam: {{ sessions|length }}</span>
+    </div>
+
+    <div class="space-y-3">
+      {% for s in sessions %}
+      <div class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner p-4 flex items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <div class="font-medium">
+              {{ s.date.strftime('%d.%m.%Y') }} · {{ s.time.strftime('%H:%M') }}
+            </div>
+            {% if s.completed %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-200 text-green-800">Tamamlandı</span>
+            {% else %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800">Planlandı</span>
+            {% endif %}
+          </div>
+          <div class="mt-1 text-xs text-stone-500">
+            Kapasite: <span class="font-medium">{{ s.capacity }}</span> ·
+            Kalan: <span class="font-medium">{{ s.spots_left }}</span> ·
+            {{ s.notes or '—' }}
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="{{ url_for('admin_participants', session_id=s.id) }}"
+             class="px-3 py-2 rounded-xl bg-white/80 ring-1 ring-white/60 shadow hover:bg-white transition text-sm">
+            Katılımcılar
+          </a>
+          <form method="post" action="{{ url_for('admin_delete_session', session_id=s.id) }}"
+                onsubmit="return confirm('Seans silinsin mi? Bu işlem katılımcıları da etkileyecektir.')">
+            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-pink-300 to-rose-400 text-stone-900 shadow hover:shadow-md transition text-sm">
+              Sil
+            </button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-sm text-stone-500">Henüz seans yok.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

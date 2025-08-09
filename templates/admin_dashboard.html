@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Admin Paneli · Pilates Studio{% endblock %}
+{% block content %}
+
+{# yüzde hesapla (cap 0 ise 0%) #}
+{% set pct = (today_fill*100//today_cap) if today_cap else 0 %}
+
+<div class="grid md:grid-cols-3 gap-6">
+  <!-- KPI: Toplam Seans -->
+  <div class="rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-5 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-rose-200 to-violet-200 shadow-inner">🗓️</span>
+      <div class="flex-1">
+        <div class="text-xs text-stone-500">Toplam Seans</div>
+        <div class="text-2xl font-semibold">{{ total_sessions }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI: Yaklaşan -->
+  <div class="rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-5 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-200 to-pink-200 shadow-inner">⏱️</span>
+      <div class="flex-1">
+        <div class="text-xs text-stone-500">Yaklaşan</div>
+        <div class="text-2xl font-semibold">{{ upcoming }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI: Aktif Rezervasyon -->
+  <div class="rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-5 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-200 to-teal-200 shadow-inner">👥</span>
+      <div class="flex-1">
+        <div class="text-xs text-stone-500">Aktif Rezervasyon</div>
+        <div class="text-2xl font-semibold">{{ active_res }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# güvenli yüzde hesapla #}
+{% set cap  = today_cap  or 0 %}
+{% set fill = today_fill or 0 %}
+{% set pct  = (fill * 100 // cap) if cap else 0 %}
+
+{# güvenli yüzde hesapla #}
+{% set cap  = today_cap  or 0 %}
+{% set fill = today_fill or 0 %}
+{% set pct  = (fill * 100 // cap) if cap else 0 %}
+{% set pct_int = pct|int %}
+
+<!-- Bugün Doluluk -->
+<div class="rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)] mt-6">
+  <div class="flex items-center justify-between">
+    <div class="text-sm text-stone-500">Bugün doluluk</div>
+    <div class="text-sm font-medium">{{ today_fill }} / {{ today_cap }}</div>
+  </div>
+
+  <div class="mt-3 h-3 w-full rounded-full bg-white/70 ring-1 ring-white/60 shadow-inner overflow-hidden">
+    <!-- style yerine data-pct kullandık -->
+    <div class="progress-fill h-full rounded-full bg-gradient-to-r from-rose-300 via-fuchsia-300 to-violet-300 transition-all"
+         data-pct="{{ pct_int }}"></div>
+  </div>
+
+  <div class="mt-2 text-[12px] text-stone-500">{{ pct_int }}%</div>
+</div>
+
+<script>
+  // sayfa yüklendiğinde genişliği ata
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.progress-fill').forEach(el => {
+      const v = parseInt(el.dataset.pct || '0', 10);
+      el.style.width = (isFinite(v) ? v : 0) + '%';
+    });
+  });
+</script>
+
+
+
+<!-- Aksiyonlar -->
+<div class="mt-6 flex flex-wrap gap-3">
+  <a href="{{ url_for('admin_sessions') }}"
+     class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 bg-gradient-to-r from-rose-300 to-violet-300 text-stone-900 shadow hover:shadow-md">
+    🧭 Seansları Yönet
+  </a>
+  <a href="{{ url_for('admin_members') }}"
+     class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 bg-white/80 border border-white/60 backdrop-blur shadow hover:bg-white">
+    👤 Üyeler
+  </a>
+</div>
+
+{% endblock %}

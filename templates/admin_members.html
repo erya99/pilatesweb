@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Üye Yönetimi · Pilates Studio{% endblock %}
+
+{% block content %}
+<div class="grid md:grid-cols-2 gap-6">
+  
+  <!-- Yeni Üye Ekle -->
+  <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <h2 class="font-semibold mb-4 text-lg">Yeni Üye Ekle</h2>
+    <form method="post" class="grid gap-3">
+      <input type="text" name="full_name" placeholder="Ad Soyad"
+             class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none placeholder-stone-400 focus:ring-rose-300" required>
+      <input type="number" min="0" name="credits" placeholder="Başlangıç seans hakkı (örn. 10)"
+             class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none placeholder-stone-400 focus:ring-rose-300" required>
+      <button class="rounded-2xl bg-gradient-to-r from-rose-300 to-violet-300 px-4 py-3 shadow-lg hover:shadow-xl transition">
+        ➕ Ekle
+      </button>
+    </form>
+    <p class="text-xs text-stone-500 mt-3">Giriş yalnızca burada kayıtlı isimlerle yapılır.</p>
+  </div>
+
+  <!-- Üyeler -->
+  <div class="rounded-[22px] border border-white/55 bg-white/55 backdrop-blur-xl p-6 shadow-[0_20px_80px_-30px_rgba(0,0,0,.25)]">
+    <h2 class="font-semibold mb-4 text-lg">Üyeler</h2>
+    <div class="space-y-3">
+      {% for m in members %}
+      <div class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-medium">{{ m.full_name }}</div>
+            <div class="text-xs text-stone-500">Kalan seans: {{ m.credits }}</div>
+          </div>
+          <form method="post" action="{{ url_for('admin_members_delete', member_id=m.id) }}"
+                onsubmit="return confirm('Silinsin mi?')">
+            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-pink-300 to-rose-400 shadow hover:shadow-lg transition">🗑 Sil</button>
+          </form>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          <form method="post" action="{{ url_for('admin_members_adjust_credits', member_id=m.id) }}">
+            <input type="hidden" name="delta" value="1">
+            <button class="px-3 py-2 rounded-xl bg-white/80 ring-1 ring-white/60 shadow hover:bg-white transition">+1</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_members_adjust_credits', member_id=m.id) }}">
+            <input type="hidden" name="delta" value="-1">
+            <button class="px-3 py-2 rounded-xl bg-white/80 ring-1 ring-white/60 shadow hover:bg-white transition">-1</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_members_adjust_credits', member_id=m.id) }}" class="flex gap-2 items-center">
+            <input type="number" name="delta" placeholder="+/-"
+                   class="rounded-xl bg-white/80 ring-1 ring-white/60 shadow-inner px-3 py-2 w-20 outline-none placeholder-stone-400 focus:ring-rose-300" required>
+            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-300 to-violet-300 shadow hover:shadow-lg transition">Güncelle</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-sm text-stone-500">Kayıtlı üye yok.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
