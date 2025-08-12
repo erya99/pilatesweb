@@ -35,6 +35,47 @@
                class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300">
       </label>
 
+      <!-- Sabit / Recurring + Rezerve Üyeler -->
+      <div class="mt-2 rounded-2xl bg-white/70 ring-1 ring-white/60 p-4">
+        <label class="flex items-center gap-3 cursor-pointer select-none">
+          <input type="checkbox" id="reserved_toggle" name="reserved_slot" value="1"
+                 class="h-5 w-5 rounded border-stone-300">
+          <div>
+            <div class="font-medium text-sm">Bu seansı sabit/recurring olarak rezerve et</div>
+            <div class="text-xs text-stone-500">Seçili üyeler için her hafta aynı gün/saat otomatik yer ayrılır.</div>
+          </div>
+        </label>
+
+        <div id="reserved_area" class="hidden mt-4 space-y-3">
+          <label class="block">
+            <span class="mb-1 block text-sm text-stone-600">Üye Seç (çoklu)</span>
+            <!-- ÖNEMLİ: name 'reserved_member_ids[]' ve multiple -->
+            <select name="reserved_member_ids[]" multiple
+                    class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300
+                           [&_option:checked]:bg-rose-100 [&_option:checked]:font-medium [&_option:checked]:text-rose-700">
+              {% if members is defined and members %}
+                {% for m in members %}
+                  <option value="{{ m.id }}">{{ m.full_name }} ({{ m.credits }} hak)</option>
+                {% endfor %}
+              {% else %}
+                <option disabled>Üye listesi bulunamadı (admin_members ekleyin)</option>
+              {% endif %}
+            </select>
+            <p class="text-[12px] text-stone-500 mt-1">Ctrl/⌘ ile çoklu seçim yapabilirsiniz.</p>
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-sm text-stone-600">Tekrarlama Deseni</span>
+            <select name="repeat_pattern"
+                    class="w-full rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner px-4 py-3 outline-none focus:ring-rose-300">
+              <option value="weekly" selected>Her Hafta (önerilen)</option>
+              <option value="biweekly">2 Haftada Bir</option>
+              <option value="monthly">Aylık</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <button class="mt-2 rounded-2xl bg-gradient-to-r from-rose-300 to-violet-300 px-4 py-3 shadow-lg hover:shadow-xl transition">
         ➕ Ekle
       </button>
@@ -52,7 +93,7 @@
       {% for s in sessions %}
       <div class="rounded-2xl bg-white/80 ring-1 ring-white/60 shadow-inner p-4 flex items-start justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <div class="font-medium">
               {{ s.date.strftime('%d.%m.%Y') }} · {{ s.time.strftime('%H:%M') }}
             </div>
@@ -60,6 +101,10 @@
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-200 text-green-800">Tamamlandı</span>
             {% else %}
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800">Planlandı</span>
+            {% endif %}
+            {# Eğer modelde is_reserved alanı varsa göster #}
+            {% if s.is_reserved is defined and s.is_reserved %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">Rezerve</span>
             {% endif %}
           </div>
           <div class="mt-1 text-xs text-stone-500">
@@ -88,4 +133,17 @@
     </div>
   </div>
 </div>
+
+<script>
+  // "Sabit/Recurring" seçilince üye seçimi ve pattern alanını aç/kapat
+  document.addEventListener('DOMContentLoaded', () => {
+    const tog  = document.getElementById('reserved_toggle');
+    const area = document.getElementById('reserved_area');
+    if (tog && area) {
+      const sync = () => area.classList.toggle('hidden', !tog.checked);
+      tog.addEventListener('change', sync);
+      sync();
+    }
+  });
+</script>
 {% endblock %}

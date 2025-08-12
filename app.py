@@ -18,6 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///pil
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 ALLOWED_STATUSES = ('active', 'canceled', 'moved', 'attended', 'no_show')
+ALLOWED_CANCEL = ('none', 'pending', 'approved', 'rejected')
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -32,6 +33,8 @@ class Session(db.Model):
     spots_left = db.Column(db.Integer, nullable=False)
     notes = db.Column(db.String(255))
     completed = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    is_reserved = db.Column(db.Boolean, default=False, nullable=False)
+
 
     __table_args__ = (
         CheckConstraint('capacity >= 0'),
@@ -55,6 +58,14 @@ class Reservation(db.Model):
     status = db.Column(Enum(*ALLOWED_STATUSES, name='reservation_status'), default='active', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    cancel_reason = db.Column(db.Text, nullable=True)  # üyenin yazdığı sebep
+    cancel_status = db.Column(
+        Enum(*ALLOWED_CANCEL, name='cancel_status'),
+        default='none',
+        nullable=False
+    )
+
+
 
     session = db.relationship('Session', backref=db.backref('reservations', cascade='all, delete-orphan'))
 
@@ -268,6 +279,7 @@ def reserve(session_id):
 @app.route('/cancel/<int:reservation_id>', methods=['POST'])
 @login_required
 def cancel(reservation_id):
+    flash('İptal için sebep girerek talep göndermelisiniz.', 'warning')
     r = Reservation.query.get_or_404(reservation_id)
     if r.user_name != flask_session['user_name']:
         flash('Bu işlem için yetkiniz yok.', 'error')
@@ -354,6 +366,38 @@ def admin_cancel_reservation_refund(reservation_id):
     flash('Rezervasyon iptal edildi. (İade uygulandı)', 'success')
     return redirect(url_for('admin_participants', session_id=r.session_id))
 
+# app.py
+@app.route('/cancel_request/<int:reservation_id>', methods=['POST'])
+@login_required
+def cancel_request(reservation_id):
+    r = Reservation.query.get_or_404(reservation_id)
+    if r.user_name != flask_session['user_name']:
+        flash('Bu işlem için yetkiniz yok.', 'error')
+        return redirect(url_for('user_dashboard'))
+    if r.status != 'active':
+        flash('Bu rezervasyon aktif değil.', 'error')
+        return redirect(url_for('user_dashboard'))
+    start_dt = datetime.combine(r.session.date, r.session.time)
+    if start_dt - datetime.now() < timedelta(hours=24):
+        # 24 saatten az ise istek kabul edilmez
+        flash('Seans saatine 24 saatten az kaldığı için uygulamadan iptal talebi oluşturamazsınız. Lütfen hocanızla iletişime geçin.', 'warning')
+        return redirect(url_for('user_dashboard'))
+
+    reason = (request.form.get('reason') or '').strip()
+    if not reason:
+        flash('Lütfen iptal sebebini yazın.', 'error')
+        return redirect(url_for('user_dashboard'))
+
+    r.cancel_reason = reason
+    r.cancel_status = 'pending'
+    db.session.commit()
+    flash('İptal talebiniz alındı. Eğitmen onayı sonrası sonuçlanacak.', 'info')
+    return redirect(url_for('user_dashboard'))
+
+
+
+
+
 
 # ——— Routes: Admin ———
 @app.route('/admin', methods=['GET', 'POST'])
@@ -384,12 +428,72 @@ def admin_dashboard():
         .filter(Session.date == today)
         .scalar() or 0
     )
+    pending_count = Reservation.query.filter_by(cancel_status='pending').count()
     return render_template('admin_dashboard.html',
                            total_sessions=total_sessions,
                            upcoming=upcoming,
                            active_res=active_res,
                            today_fill=today_fill,
-                           today_cap=today_cap)
+                           today_cap=today_cap,
+                           pending_count=pending_count)
+
+
+# app.py
+@app.route('/admin/cancel-requests')
+@admin_required
+def admin_cancel_requests():
+    pending = (
+        Reservation.query
+        .filter_by(cancel_status='pending')
+        .join(Session)
+        .order_by(Session.date.asc(), Session.time.asc())
+        .all()
+    )
+    return render_template('admin_cancel_requests.html', pending=pending)
+
+
+
+# app.py
+@app.route('/admin/cancel-requests/<int:rid>/approve', methods=['POST'])
+@admin_required
+def admin_cancel_approve(rid):
+    r = Reservation.query.get_or_404(rid)
+    if r.cancel_status != 'pending':
+        flash('Talep durumu uygun değil.', 'error')
+        return redirect(url_for('admin_cancel_requests'))
+
+    # Rezervasyonu iptal et + yer aç
+    if r.status == 'active':
+        r.status = 'canceled'
+        if not r.session.is_past and r.session.spots_left < r.session.capacity:
+            r.session.spots_left += 1
+
+    r.cancel_status = 'approved'
+    db.session.commit()
+    flash('İptal onaylandı.', 'success')
+    return redirect(url_for('admin_cancel_requests'))
+
+
+
+@app.route('/admin/cancel-requests/<int:rid>/reject', methods=['POST'])
+@admin_required
+def admin_cancel_reject(rid):
+    r = Reservation.query.get_or_404(rid)
+    if r.cancel_status != 'pending':
+        flash('Talep durumu uygun değil.', 'error')
+        return redirect(url_for('admin_cancel_requests'))
+
+    r.cancel_status = 'rejected'
+    db.session.commit()
+    flash('İptal talebi reddedildi.', 'info')
+    return redirect(url_for('admin_cancel_requests'))
+
+
+
+# ...
+
+# app.py
+# ... diğer importlar: db, Session, Reservation, Member, admin_required, etc.
 
 @app.route('/admin/sessions', methods=['GET', 'POST'])
 @admin_required
@@ -398,17 +502,71 @@ def admin_sessions():
         try:
             d = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
             t = datetime.strptime(request.form['time'], '%H:%M').time()
-            cap = int(request.form['capacity'])
-            notes = request.form.get('notes') or None
+            cap = max(1, int(request.form['capacity']))
+            notes = (request.form.get('notes') or '').strip() or None
+
+            # seansı oluştur
             s = Session(date=d, time=t, capacity=cap, spots_left=cap, notes=notes)
             db.session.add(s)
+            db.session.flush()  # s.id hemen oluşsun
+
+            added = 0  # kaç üye rezerve edildi
+
+            # --- Recurring / sabit rezervasyon ---
+            if request.form.get('reserved_slot') == '1':
+                # Hem "reserved_member_ids[]" hem "reserved_member_ids" anahtarlarını dene
+                raw_ids = (
+                    request.form.getlist('reserved_member_ids[]')
+                    or request.form.getlist('reserved_member_ids')
+                    or []
+                )
+
+                # sayılara çevir + tekrarlayanları temizle (sıra korunur)
+                safe_ids = []
+                for x in raw_ids:
+                    try:
+                        n = int(x)
+                        if n not in safe_ids:
+                            safe_ids.append(n)
+                    except (ValueError, TypeError):
+                        pass
+
+                if safe_ids:
+                    selected_members = Member.query.filter(Member.id.in_(safe_ids)).all()
+
+                    # seçilen üyeler için aktif rezervasyon oluştur
+                    for m in selected_members:
+                        if s.spots_left <= 0:
+                            break
+                        db.session.add(Reservation(
+                            user_name=m.full_name,
+                            session_id=s.id,
+                            status='active'
+                        ))
+                        s.spots_left -= 1
+                        added += 1
+
+                # İleride planlayıcı eklenecekse:
+                # repeat_pattern = request.form.get('repeat_pattern')  # 'weekly', 'biweekly', 'monthly'
+
             db.session.commit()
-            flash('Seans eklendi.', 'success')
+            flash(
+                f"Seans eklendi{' ve ' + str(added) + ' üye rezerve edildi' if added else ''}.",
+                'success'
+            )
+            return redirect(url_for('admin_sessions'))
+
         except Exception as e:
             db.session.rollback()
-            flash('Seans eklenemedi.', 'error')
+            flash('Seans eklenemedi: ' + str(e), 'error')
+            return redirect(url_for('admin_sessions'))
+
+    # GET: sadece listeleri ver
+    members = Member.query.order_by(Member.full_name.asc()).all()
     sessions = Session.query.order_by(Session.date.asc(), Session.time.asc()).all()
-    return render_template('admin_sessions.html', sessions=sessions)
+    return render_template('admin_sessions.html', sessions=sessions, members=members)
+
+
 
 @app.route('/admin/sessions/<int:session_id>/delete', methods=['POST'])
 @admin_required
